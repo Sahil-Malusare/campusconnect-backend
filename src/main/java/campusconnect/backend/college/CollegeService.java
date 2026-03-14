@@ -121,7 +121,7 @@ public class CollegeService {
                 .eventDate(request.getEventDate())
                 .maxParticipants(request.getMaxParticipants())
                 .category(request.getCategory())
-                .status(EventStatus.PENDING)
+                .eventStatus(EventStatus.PENDING)
                 .college(college)
                 .build();
 
@@ -134,7 +134,7 @@ public class CollegeService {
                 .eventDate(eventRequest.getEventDate())
                 .maxParticipants(eventRequest.getMaxParticipants())
                 .category(eventRequest.getCategory().name())
-                .status(eventRequest.getStatus().name())
+                .status(eventRequest.getEventStatus().name())
                 .collegeName(college.getName())
                 .build();
     }
@@ -156,7 +156,7 @@ public class CollegeService {
                         .eventDate(event.getEventDate())
                         .maxParticipants(event.getMaxParticipants())
                         .category(event.getCategory().name())
-                        .status(event.getStatus().name())
+                        .status(event.getEventStatus().name())
                         .collegeName(college.getName())
                         .build())
                 .toList();
@@ -177,7 +177,7 @@ public class CollegeService {
             throw new RuntimeException("You cannot delete this request");
         }
 
-        if(request.getStatus() != EventStatus.PENDING){
+        if(request.getEventStatus() != EventStatus.PENDING){
             throw new RuntimeException("Only pending requests can be deleted");
         }
 
@@ -205,7 +205,7 @@ public class CollegeService {
             throw new RuntimeException("You cannot edit this request");
         }
 
-        if(eventRequest.getStatus() != EventStatus.PENDING){
+        if(eventRequest.getEventStatus() != EventStatus.PENDING){
             throw new RuntimeException("Only pending requests can be edited");
         }
 
@@ -232,7 +232,7 @@ public class CollegeService {
                 .eventDate(eventRequest.getEventDate())
                 .maxParticipants(eventRequest.getMaxParticipants())
                 .category(eventRequest.getCategory().name())
-                .status(eventRequest.getStatus().name())
+                .status(eventRequest.getEventStatus().name())
                 .collegeName(college.getName())
                 .build();
     }

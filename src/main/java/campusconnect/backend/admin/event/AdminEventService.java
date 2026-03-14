@@ -1,19 +1,29 @@
 package campusconnect.backend.admin.event;
 
-import campusconnect.backend.entity.EventRequest;
-import campusconnect.backend.entity.EventStatus;
+import campusconnect.backend.entity.*;
 import campusconnect.backend.repository.EventRequestRepository;
+import campusconnect.backend.repository.EventServiceRepository;
+import campusconnect.backend.repository.ServiceRepository;
+import campusconnect.backend.repository.VendorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@org.springframework.stereotype.Service
 public class AdminEventService {
 
     @Autowired
     private EventRequestRepository eventRequestRepo;
+
+    @Autowired
+    private EventServiceRepository eventServiceRepo;
+
+    @Autowired
+    private VendorRepository vendorRepo;
+
+    @Autowired
+    private ServiceRepository serviceRepo;
 
     public AdminEventDTO mapToDTO(EventRequest event){
         return AdminEventDTO.builder()
@@ -23,7 +33,7 @@ public class AdminEventService {
                 .eventDate(event.getEventDate())
                 .maxParticipants(event.getMaxParticipants())
                 .category(event.getCategory())
-                .status(event.getStatus())
+                .status(event.getEventStatus())
                 .collegeId(event.getCollege().getId())
                 .collegeName(event.getCollege().getName())
                 .build();
@@ -54,11 +64,42 @@ public class AdminEventService {
         EventRequest request = eventRequestRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("event not found"));
 
-        request.setStatus(status);
+        request.setEventStatus(status);
 
         eventRequestRepo.save(request);
 
         return mapToDTO(request);
+    }
+
+    //service-vendor
+    public EventService assignVendor(Long service_id, Long vendor_id) {
+
+        EventService eventService = eventServiceRepo.findById(service_id)
+                .orElseThrow(() -> new RuntimeException("service not found"));
+
+        if (vendor_id != null) {
+            Vendor vendor = vendorRepo.findById(vendor_id)
+                    .orElseThrow(() -> new RuntimeException("service not found"));
+
+            eventService.setVendor(vendor);
+        }
+        else{
+            eventService.setVendor(null);
+        }
+
+        return eventServiceRepo.save(eventService);
+
+    }
+
+    //vendors of a service
+    public List<Vendor> getServiceVendors(Long service_id){
+
+        Service service = serviceRepo.findById(service_id)
+                .orElseThrow(()-> new RuntimeException("service not found"));
+
+        List<Vendor> vendors = vendorRepo.findByCategory(service.getService());
+
+        return vendors;
     }
 
 }
