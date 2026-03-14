@@ -1,9 +1,6 @@
 package campusconnect.backend.college;
 
-import campusconnect.backend.entity.College;
-import campusconnect.backend.entity.EventRequest;
-import campusconnect.backend.entity.User;
-import campusconnect.backend.entity.VerificationStatus;
+import campusconnect.backend.entity.*;
 import campusconnect.backend.repository.CollegeRepository;
 import campusconnect.backend.repository.EventRequestRepository;
 import campusconnect.backend.repository.UserRepository;
@@ -124,7 +121,7 @@ public class CollegeService {
                 .eventDate(request.getEventDate())
                 .maxParticipants(request.getMaxParticipants())
                 .category(request.getCategory())
-                .status(VerificationStatus.PENDING)
+                .status(EventStatus.PENDING)
                 .college(college)
                 .build();
 
@@ -180,7 +177,7 @@ public class CollegeService {
             throw new RuntimeException("You cannot delete this request");
         }
 
-        if(request.getStatus() != VerificationStatus.PENDING){
+        if(request.getStatus() != EventStatus.PENDING){
             throw new RuntimeException("Only pending requests can be deleted");
         }
 
@@ -208,7 +205,7 @@ public class CollegeService {
             throw new RuntimeException("You cannot edit this request");
         }
 
-        if(eventRequest.getStatus() != VerificationStatus.PENDING){
+        if(eventRequest.getStatus() != EventStatus.PENDING){
             throw new RuntimeException("Only pending requests can be edited");
         }
 

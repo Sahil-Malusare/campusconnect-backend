@@ -18,7 +18,7 @@ public class EventService {
     private Long id;
 
     @ManyToOne
-    private Event event;
+    private EventRequest eventRequest;
 
     @ManyToOne
     private Service service;
