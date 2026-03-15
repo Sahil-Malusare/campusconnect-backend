@@ -1,9 +1,11 @@
 package campusconnect.backend.college;
 
+import campusconnect.backend.dto.EventPaymentDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -83,4 +85,39 @@ public class CollegeController {
 
         return collegeService.updateEventRequest(id, request, email);
     }
+
+    @PostMapping("/events/{id}/confirm")
+    public String confirmEvent(@PathVariable Long id,
+                               @RequestBody EventPaymentDTO payment,
+                               Authentication authentication){
+
+        return collegeService.confirmEventPlan(
+                id,
+                payment,
+                authentication.getName()
+        );
+    }
+
+    @PostMapping("/events/{id}/reject")
+    public String rejectEvent(@PathVariable Long id,
+                              Authentication authentication){
+
+        return collegeService.rejectEventPlan(
+                id,
+                authentication.getName()
+        );
+    }
+
+    @PutMapping("/events/{id}/reschedule")
+    public String rescheduleEvent(@PathVariable Long id,
+                                  @RequestParam LocalDateTime newDate,
+                                  Authentication authentication){
+
+        return collegeService.requestReschedule(
+                id,
+                newDate,
+                authentication.getName()
+        );
+    }
+
 }

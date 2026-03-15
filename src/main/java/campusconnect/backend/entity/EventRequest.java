@@ -2,6 +2,7 @@ package campusconnect.backend.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 import lombok.*;
@@ -33,4 +34,7 @@ public class EventRequest {
 
     @ManyToOne
     private College college;
+
+    @OneToMany(mappedBy = "eventRequest", cascade = CascadeType.ALL)
+    private List<EventService> services;
 }

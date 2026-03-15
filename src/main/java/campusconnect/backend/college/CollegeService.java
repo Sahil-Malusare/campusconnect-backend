@@ -1,11 +1,10 @@
 package campusconnect.backend.college;
 
 import campusconnect.backend.entity.*;
-import campusconnect.backend.repository.CollegeRepository;
-import campusconnect.backend.repository.EventRequestRepository;
-import campusconnect.backend.repository.UserRepository;
+import campusconnect.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import campusconnect.backend.dto.EventPaymentDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +16,9 @@ public class CollegeService {
     private final CollegeRepository collegeRepository;
     private final UserRepository userRepository;
     private final EventRequestRepository eventRequestRepository;
+    private final ServiceRepository serviceRepository;
+    private final EventServiceRepository eventServiceRepository;
+    private final EventPaymentRepository eventPaymentRepository;
 
     public String registerCollege(CollegeRegistrationRequestDTO request, String email) {
 
@@ -115,6 +117,7 @@ public class CollegeService {
             throw new RuntimeException("Event already requested");
         }
 
+        // Create EventRequest
         EventRequest eventRequest = EventRequest.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -126,6 +129,24 @@ public class CollegeService {
                 .build();
 
         eventRequestRepository.save(eventRequest);
+
+        // Create EventService entries
+        if(request.getServiceIds() != null && !request.getServiceIds().isEmpty()){
+
+            for(Long serviceId : request.getServiceIds()){
+
+                ServiceType service = serviceRepository.findById(serviceId)
+                        .orElseThrow(() -> new RuntimeException("Service not found"));
+
+                EventService eventService = EventService.builder()
+                        .eventRequest(eventRequest)
+                        .serviceType(service)
+                        .vendor(null) // vendor assigned later by admin
+                        .build();
+
+                eventServiceRepository.save(eventService);
+            }
+        }
 
         return EventRequestResponseDTO.builder()
                 .id(eventRequest.getId())
@@ -235,5 +256,98 @@ public class CollegeService {
                 .status(eventRequest.getEventStatus().name())
                 .collegeName(college.getName())
                 .build();
+    }
+
+    public String confirmEventPlan(Long eventId,
+                                   EventPaymentDTO paymentDTO,
+                                   String email){
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        College college = collegeRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("College not found"));
+
+        EventRequest event = eventRequestRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        if(!event.getCollege().getId().equals(college.getId())){
+            throw new RuntimeException("You cannot confirm this event");
+        }
+
+        if(event.getEventStatus() != EventStatus.PLANNED){
+            throw new RuntimeException("Event plan is not ready yet");
+        }
+
+        EventPayment payment = EventPayment.builder()
+                .amount(paymentDTO.getAmount())
+                .paymentMethod(paymentDTO.getPaymentMethod())
+                .transactionId(paymentDTO.getTransactionId())
+                .paymentDate(LocalDateTime.now())
+                .eventRequest(event)
+                .build();
+
+        eventPaymentRepository.save(payment);
+
+        event.setEventStatus(EventStatus.CONFIRMED);
+
+        eventRequestRepository.save(event);
+
+        return "Event confirmed after advance payment";
+    }
+
+    public String rejectEventPlan(Long eventId, String email){
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        College college = collegeRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("College not found"));
+
+        EventRequest event = eventRequestRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        if(!event.getCollege().getId().equals(college.getId())){
+            throw new RuntimeException("You cannot reject this event");
+        }
+
+        if(event.getEventStatus() != EventStatus.PLANNED){
+            throw new RuntimeException("Event cannot be rejected now");
+        }
+
+        event.setEventStatus(EventStatus.REJECTED);
+
+        eventRequestRepository.save(event);
+
+        return "Event plan rejected";
+    }
+
+    public String requestReschedule(Long eventId,
+                                    LocalDateTime newDate,
+                                    String email){
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        College college = collegeRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("College not found"));
+
+        EventRequest event = eventRequestRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        if(!event.getCollege().getId().equals(college.getId())){
+            throw new RuntimeException("You cannot modify this event");
+        }
+
+        if(newDate.isBefore(LocalDateTime.now())){
+            throw new RuntimeException("New date must be in future");
+        }
+
+        event.setEventDate(newDate);
+        event.setEventStatus(EventStatus.RESCHEDULED);
+
+        eventRequestRepository.save(event);
+
+        return "Event reschedule request sent";
     }
 }

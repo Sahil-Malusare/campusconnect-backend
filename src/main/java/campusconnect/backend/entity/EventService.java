@@ -24,7 +24,7 @@ public class EventService {
 
     @ManyToOne
     @JoinColumn(name = "service_id")
-    private Service service;
+    private ServiceType serviceType;
 
     @ManyToOne
     @JoinColumn(name = "vendor_id")

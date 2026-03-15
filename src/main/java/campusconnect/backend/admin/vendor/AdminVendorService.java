@@ -1,25 +1,26 @@
 package campusconnect.backend.admin.vendor;
 
+import campusconnect.backend.entity.ServiceType;
 import campusconnect.backend.entity.Vendor;
 import campusconnect.backend.entity.VerificationStatus;
 import campusconnect.backend.repository.ServiceRepository;
 import campusconnect.backend.repository.VendorRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import campusconnect.backend.entity.Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@org.springframework.stereotype.Service
+@Service
+@RequiredArgsConstructor
 public class AdminVendorService {
 
-    @Autowired
-    private VendorRepository vendorRepo;
-
-    @Autowired
-    private ServiceRepository serviceRepo;
+    private final VendorRepository vendorRepo;
+    private final ServiceRepository serviceRepo;
 
     public AdminVendorDTO mapToDTO(Vendor vendor) {
+
         return AdminVendorDTO.builder()
                 .id(vendor.getId())
                 .businessName(vendor.getBusinessName())
@@ -28,19 +29,21 @@ public class AdminVendorService {
                 .gstNumber(vendor.getGstNumber())
                 .businessLicenseUrl(vendor.getBusinessLicenseUrl())
                 .verificationStatus(vendor.getVerificationStatus())
-                .userId(vendor.getUser().getId())
-                .userName(vendor.getUser().getName())
-                .userEmail(vendor.getUser().getEmail())
+                .userId(vendor.getUser() != null ? vendor.getUser().getId() : null)
+                .userName(vendor.getUser() != null ? vendor.getUser().getName() : null)
+                .userEmail(vendor.getUser() != null ? vendor.getUser().getEmail() : null)
                 .build();
     }
 
     public List<AdminVendorDTO> getVendors(VerificationStatus status) {
+
         List<Vendor> vendors;
 
-        if (status != null)
+        if (status != null) {
             vendors = vendorRepo.findByVerificationStatus(status);
-        else
+        } else {
             vendors = vendorRepo.findAll();
+        }
 
         return vendors.stream()
                 .map(this::mapToDTO)
@@ -48,33 +51,37 @@ public class AdminVendorService {
     }
 
     public AdminVendorDTO getVendorById(Long id) {
+
         Vendor vendor = vendorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("vendor not found"));
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
         return mapToDTO(vendor);
     }
 
     public AdminVendorDTO verifyStatus(Long id, VerificationStatus status) {
-        Vendor vendor = vendorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("vendor not found"));
 
+        Vendor vendor = vendorRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+
+        // If admin approves vendor
         if (status == VerificationStatus.APPROVED) {
 
-            Optional<Service> existingService =
+            Optional<ServiceType> existingService =
                     serviceRepo.findByService(vendor.getCategory());
 
             if (existingService.isEmpty()) {
-                Service service = Service.builder()
+
+                ServiceType serviceType = ServiceType.builder()
                         .service(vendor.getCategory())
                         .build();
 
-                serviceRepo.save(service);
+                serviceRepo.save(serviceType);
             }
         }
-            vendor.setVerificationStatus(status);
-            vendorRepo.save(vendor);
 
-            return mapToDTO(vendor);
-        }
+        vendor.setVerificationStatus(status);
+        vendorRepo.save(vendor);
 
+        return mapToDTO(vendor);
     }
+}

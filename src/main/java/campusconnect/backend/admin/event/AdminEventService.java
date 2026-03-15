@@ -94,10 +94,10 @@ public class AdminEventService {
     //vendors of a service
     public List<Vendor> getServiceVendors(Long service_id){
 
-        Service service = serviceRepo.findById(service_id)
+        ServiceType serviceType = serviceRepo.findById(service_id)
                 .orElseThrow(()-> new RuntimeException("service not found"));
 
-        List<Vendor> vendors = vendorRepo.findByCategory(service.getService());
+        List<Vendor> vendors = vendorRepo.findByCategory(serviceType.getService());
 
         return vendors;
     }
